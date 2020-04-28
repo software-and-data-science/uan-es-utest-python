@@ -2,12 +2,33 @@
 version: 2.1
 # Use a package of configuration called an orb.
 orbs:
-  # Declare a dependency on the welcome-orb
-  welcome: circleci/welcome-orb@0.4.1
-# Orchestrate or schedule a set of jobs
+  sonarcloud: sonarsource/sonarcloud@1.0.1
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.7
+    working_directory: ~/repo
+    steps:
+      # Step 1: obtain repo from GitHub
+      - checkout
+      # Step 2: create virtual env and install dependencies
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install --upgrade pip
+
+      # Step 3: pytest
+      - run:
+          name: run test
+          command: |
+            . venv/bin/activate
+            pytest
+      # Step 4: Sonar cloud report
+      - sonarcloud/scan
 workflows:
-  # Name the workflow "welcome"
-  welcome:
-    # Run the welcome/run job in its own container
+  main:
     jobs:
-      - welcome/run
+      - build:
+          context: sonarcloud
